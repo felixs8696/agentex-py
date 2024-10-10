@@ -1,0 +1,10 @@
+build:
+  context:
+    root: ../../../../
+    include_paths:
+      - agentex-py
+    dockerfile: agentex-py/examples/agents/hello_world/Dockerfile
+    dockerignore: agentex-py/examples/agents/hello_world/.dockerignore
+  image:
+    repository: agentex/examples/hello-world
+    tag: 0.0.0
