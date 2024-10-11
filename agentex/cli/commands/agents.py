@@ -36,14 +36,14 @@ def serve(
 
 @agents.command()
 def create(
-    build_manifest_path: Optional[str] = typer.Option(
-        None, help="Path to the build manifest you want to use"
+    manifest: Optional[str] = typer.Option(
+        None, help="Path to the manifest you want to use"
     )
 ):
     """
     Register an action with the given manifest path.
     """
-    typer.echo(f"Registering action with manifest: {build_manifest_path}")
+    typer.echo(f"Registering action with manifest: {manifest}")
     client = Agentex()
-    agent = create_agent(client, build_manifest_path)
+    agent = create_agent(client, manifest)
     logger.info(f"Agent created: {agent}")

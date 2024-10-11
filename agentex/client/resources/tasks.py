@@ -16,10 +16,10 @@ class AgentsResource(SyncAPIResource):
         agent_package: FileTypes,
         request: CreateAgentRequest,
     ) -> CreateAgentResponse:
-        body = {"request": json.dumps(request)}
+        body = {"request": request.to_json()}
         response = self._post(
             "/agents",
-            body=body,
+            data=body,
             files=[("agent_package", agent_package)],
             headers={"Content-Type": "multipart/form-data"},
         )
@@ -34,10 +34,10 @@ class AsyncAgentsResource(AsyncAPIResource):
         agent_package: FileTypes,
         request: CreateAgentRequest,
     ) -> CreateAgentResponse:
-        body = {"request": json.dumps(request)}
+        body = {"request": request.to_json()}
         response = await self._post(
             "/agents",
-            body=body,
+            data=body,
             files=[("agent_package", agent_package)],
             headers={"Content-Type": "multipart/form-data"},
         )

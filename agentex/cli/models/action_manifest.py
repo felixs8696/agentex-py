@@ -64,12 +64,40 @@ class BuildConfig(BaseModel):
     image: ImageConfig
 
 
+class AgentConfig(BaseModel):
+    name: str = Field(
+        ...,
+        description="The name of the agent."
+    )
+    description: str = Field(
+        ...,
+        description="The description of the agent."
+    )
+    version: str = Field(
+        pattern=r"^[a-zA-Z0-9-\.]+$",
+    )
+
+
+class ActionServiceConfig(BaseModel):
+    """
+    Represents the configuration for the service.
+    """
+
+    port: int = Field(
+        ...,
+        description="The port on which the service will run inside the container. This is the port that the "
+                    "command is pointing at in your Dockerfile."
+    )
+
+
 class ActionManifestConfig(BaseModel):
     """
     Represents the configuration for the manifest file.
     """
 
     build: BuildConfig
+    agent: AgentConfig
+    action_service: ActionServiceConfig
 
     def context_manager(self, build_context_root: Path) -> BuildContextManager:
         """

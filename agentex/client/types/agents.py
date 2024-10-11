@@ -1,71 +1,29 @@
-from typing import Dict, Any, List
+from pydantic import Field
 
-from pydantic import Field, field_validator
-
-from agentex.utils.json_schema import validate_payload
 from agentex.utils.logging import make_logger
 from agentex.utils.model_utils import BaseModel
 
 logger = make_logger(__name__)
 
 
-class CreateActionRequest(BaseModel):
-    name: str = Field(
-        ...,
-        description="The name of the action."
-    )
-    description: str = Field(
-        ...,
-        description="The description of the action."
-    )
-    parameters: Dict[str, Any] = Field(
-        ...,
-        description="The JSON schema describing the parameters that the action takes in"
-    )
-    test_payload: Dict[str, Any] = Field(
-        ...,
-        description="The payload to use when testing the action."
-    )
-    version: str = Field(
-        ...,
-        description="The version of the action."
-    )
-
-
 class CreateAgentRequest(BaseModel):
     name: str = Field(
         ...,
-        title="The unique name of the agent",
-        pattern=r"^[a-zA-Z0-9-]+$",
+        description="The unique name of the agent."
     )
     description: str = Field(
         ...,
-        title="The description of what the agent does",
+        description="The description of the agent."
     )
     version: str = Field(
         ...,
-        title="The version of the agent",
-        pattern=r"^[a-zA-Z0-9-\.]+$",
+        description="The version of the agent."
     )
-    model: str = Field(
+    action_service_port: int = Field(
         ...,
-        description="The LLM model powering the agent."
+        description="The port on which the service will run inside the container. This is the port that the "
+                    "command is pointing at in your Dockerfile. It should be specified in the action manifest."
     )
-    instructions: str = Field(
-        ...,
-        title="The initial instructions to give to the agent",
-    )
-    actions: List[CreateActionRequest] = Field(
-        ...,
-        title="The list of actions that the agent can perform",
-    )
-
-    @classmethod
-    @field_validator('actions')
-    def validate_x(cls, actions: List[CreateActionRequest]) -> List[CreateActionRequest]:
-        for action in actions:
-            validate_payload(json_schema=action.parameters, payload=action.test_payload)
-        return actions
 
 
 class CreateAgentResponse(BaseModel):

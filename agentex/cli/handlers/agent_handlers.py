@@ -1,16 +1,14 @@
-import json
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
-from rich.console import Console
 from python_on_whales import docker
+from rich.console import Console
 
+from agentex.cli.models.action_manifest import ActionManifestConfig
 from agentex.client.agentex import Agentex
 from agentex.client.types.agents import CreateAgentRequest
-from agentex.sdk.agent import Agent
 from agentex.utils.console import print_section
 from agentex.utils.logging import make_logger
-from agentex.cli.models.action_manifest import ActionManifestConfig
 
 logger = make_logger(__name__)
 console = Console()
@@ -60,26 +58,19 @@ def create_agent(agentex: Agentex, manifest_path: str):
     build_context_root = (Path(manifest_path).parent / action_manifest.build.context.root).resolve()
     with action_manifest.context_manager(build_context_root) as build_context:
         with build_context.zipped(build_context.path) as zip_stream:
-            params = CreateAgentRequest(
+            params = dict(
                 agent_package=('context.tar.gz', zip_stream, 'application/gzip'),
-                name=action_manifest.name,
-                description=action_manifest.description,
-                parameters=json.dumps({
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "The name of the caller",
-                        },
-                    },
-                    "required": ["name"],
-                }),
-                test_payload=json.dumps(action_manifest.test_payload),
-                version=action_manifest.version,
-                agents=json.dumps([]),
+                request=CreateAgentRequest(
+                    name=action_manifest.agent.name,
+                    description=action_manifest.agent.description,
+                    version=action_manifest.agent.version,
+                    action_service_port=action_manifest.action_service.port,
+                )
             )
 
-            logger.info(f"Creating action with payload: {params}")
+            logger.info(f"Creating agent with payload: {params}")
 
-            return agentex.actions.create(**params)
-
+            return agentex.agents.create(
+                agent_package=params['agent_package'],
+                request=params['request'],
+            )
