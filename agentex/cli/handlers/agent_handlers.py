@@ -4,7 +4,7 @@ from typing import Optional
 from python_on_whales import docker
 from rich.console import Console
 
-from agentex.cli.models.action_manifest import ActionManifestConfig
+from agentex.cli.models.agent_manifest import AgentManifestConfig
 from agentex.client.agentex import Agentex
 from agentex.client.types.agents import CreateAgentRequest
 from agentex.utils.console import print_section
@@ -15,11 +15,11 @@ console = Console()
 
 
 def run_agent_action_server(manifest_path: str, host_port: Optional[int] = None, container_port: Optional[int] = None):
-    action_manifest = ActionManifestConfig.from_yaml(file_path=manifest_path)
-    build_context_root = (Path(manifest_path).parent / action_manifest.build.context.root).resolve()
-    with action_manifest.context_manager(build_context_root) as build_context:
+    agent_manifest = AgentManifestConfig.from_yaml(file_path=manifest_path)
+    build_context_root = (Path(manifest_path).parent / agent_manifest.build.context.root).resolve()
+    with agent_manifest.context_manager(build_context_root) as build_context:
         # Use the build_context_root directly as the context for Docker
-        image = f'{action_manifest.build.image.repository}:{action_manifest.build.image.tag}'
+        image = f'{agent_manifest.build.image.repository}:{agent_manifest.build.image.tag}'
         build_logs = docker.build(
             context_path=str(build_context.path),  # Use the build context folder
             tags=image,
@@ -54,17 +54,17 @@ def run_agent_action_server(manifest_path: str, host_port: Optional[int] = None,
 
 
 def create_agent(agentex: Agentex, manifest_path: str):
-    action_manifest = ActionManifestConfig.from_yaml(file_path=manifest_path)
-    build_context_root = (Path(manifest_path).parent / action_manifest.build.context.root).resolve()
-    with action_manifest.context_manager(build_context_root) as build_context:
+    agent_manifest = AgentManifestConfig.from_yaml(file_path=manifest_path)
+    build_context_root = (Path(manifest_path).parent / agent_manifest.build.context.root).resolve()
+    with agent_manifest.context_manager(build_context_root) as build_context:
         with build_context.zipped(build_context.path) as zip_stream:
             params = dict(
                 agent_package=('context.tar.gz', zip_stream, 'application/gzip'),
                 request=CreateAgentRequest(
-                    name=action_manifest.agent.name,
-                    description=action_manifest.agent.description,
-                    version=action_manifest.agent.version,
-                    action_service_port=action_manifest.action_service.port,
+                    name=agent_manifest.agent.name,
+                    description=agent_manifest.agent.description,
+                    version=agent_manifest.agent.version,
+                    action_service_port=agent_manifest.action_service.port,
                 )
             )
 

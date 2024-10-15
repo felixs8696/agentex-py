@@ -90,7 +90,7 @@ class ActionServiceConfig(BaseModel):
     )
 
 
-class ActionManifestConfig(BaseModel):
+class AgentManifestConfig(BaseModel):
     """
     Represents the configuration for the manifest file.
     """
@@ -103,7 +103,7 @@ class ActionManifestConfig(BaseModel):
         """
         Creates a build context manager
         """
-        return BuildContextManager(action_manifest=self, build_context_root=build_context_root)
+        return BuildContextManager(agent_manifest=self, build_context_root=build_context_root)
 
 
 class BuildContextManager:
@@ -111,8 +111,8 @@ class BuildContextManager:
     A gateway used to manage the build context for a docker image
     """
 
-    def __init__(self, action_manifest: ActionManifestConfig, build_context_root: Path):
-        self.action_manifest = action_manifest
+    def __init__(self, agent_manifest: AgentManifestConfig, build_context_root: Path):
+        self.agent_manifest = agent_manifest
         self.build_context_root = build_context_root
         self._temp_dir: Optional[tempfile.TemporaryDirectory] = None
 
@@ -125,16 +125,16 @@ class BuildContextManager:
         self._temp_dir = tempfile.TemporaryDirectory()
         self.path = Path(self._temp_dir.name)
 
-        dockerfile_path = self.build_context_root / self.action_manifest.build.context.dockerfile
+        dockerfile_path = self.build_context_root / self.agent_manifest.build.context.dockerfile
         self.add_dockerfile(root_path=self.path, dockerfile_path=dockerfile_path)
 
         ignore_patterns = []
-        if self.action_manifest.build.context.dockerignore:
-            dockerignore_path = self.build_context_root / self.action_manifest.build.context.dockerignore
+        if self.agent_manifest.build.context.dockerignore:
+            dockerignore_path = self.build_context_root / self.agent_manifest.build.context.dockerignore
             self.add_dockerignore(root_path=self.path, dockerignore_path=dockerignore_path)
             ignore_patterns = _extract_dockerignore_patterns(dockerignore_path)
 
-        for directory in self.action_manifest.build.context.include_paths:
+        for directory in self.agent_manifest.build.context.include_paths:
             directory_path = self.build_context_root / directory
             self.add_directory(
                 root_path=self.path,

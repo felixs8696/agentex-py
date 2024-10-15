@@ -13,8 +13,8 @@ app = typer.Typer(
     add_completion=False,
 )
 
-# Add the 'actions' subcommand from the imported module
-app.add_typer(agents, name="agent")
+# Add the 'agents' subcommand from the imported module
+app.add_typer(agents, name="agents")
 
 
 async def async_hello():
