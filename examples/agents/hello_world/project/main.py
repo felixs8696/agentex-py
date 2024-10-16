@@ -12,9 +12,7 @@ agent = Agent(
 )
 
 
-@agent.action(
-    test_payload={"agent_name": "Agentex"},
-)
+@agent.action(test_payload={"agent_name": "Agentex"})
 class HelloAdam(AgentAction):
     """
     Say hello to Adam
@@ -26,9 +24,7 @@ class HelloAdam(AgentAction):
         return f"Adam: 'Hello {self.agent_name}!'"
 
 
-@agent.action(
-    test_payload={"agent_name": "Agentex"},
-)
+@agent.action(test_payload={"agent_name": "Agentex"})
 class HelloJessica(AgentAction):
     """
     Say hello to Jessica
