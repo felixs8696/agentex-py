@@ -31,7 +31,7 @@ class Agent:
             version=version,
         )  # Each agent has its own FastAPI app
 
-    def action(self, version: str, test_payload: Optional[Dict] = None) -> Any:
+    def action(self, test_payload: Optional[Dict] = None) -> Any:
         def decorated(model_cls: Type[BaseModel]):
             # Handle if it's a Pydantic model (class-based)
             assert isinstance(model_cls, type) and issubclass(model_cls, BaseModel)
@@ -63,7 +63,6 @@ class Agent:
                 description=model_cls.__doc__.strip(),
                 parameters=action_schema,
                 test_payload=test_payload,
-                version=version,
             ))
             self._register_fastapi_route(name=action_name, model=model_cls)
             self._update_fastapi_root_route()

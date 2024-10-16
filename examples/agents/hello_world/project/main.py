@@ -13,7 +13,6 @@ agent = Agent(
 
 
 @agent.action(
-    version="0.0.0",
     test_payload={"agent_name": "Agentex"},
 )
 class HelloAdam(AgentAction):
@@ -28,7 +27,6 @@ class HelloAdam(AgentAction):
 
 
 @agent.action(
-    version="0.0.0",
     test_payload={"agent_name": "Agentex"},
 )
 class HelloJessica(AgentAction):
