@@ -4,7 +4,7 @@ from typing import Optional
 from python_on_whales import docker
 from rich.console import Console
 
-from agentex.cli.models.agent_manifest import AgentManifestConfig
+from agentex.cli.models.action_manifest import AgentManifestConfig
 from agentex.client.agentex import Agentex
 from agentex.client.types.agents import CreateAgentRequest
 from agentex.utils.console import print_section

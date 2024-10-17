@@ -3,6 +3,7 @@ import asyncio
 import typer
 
 from agentex.cli.commands.agents import agents
+from agentex.cli.commands.tasks import tasks
 from agentex.client.agentex import AsyncAgentex
 
 # Create the main Typer application
@@ -15,6 +16,7 @@ app = typer.Typer(
 
 # Add the 'agents' subcommand from the imported module
 app.add_typer(agents, name="agents")
+app.add_typer(tasks, name="tasks")
 
 
 async def async_hello():

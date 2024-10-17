@@ -8,7 +8,6 @@ from agentex.utils.logging import make_logger
 
 logger = make_logger(__name__)
 
-# Create a Typer instance for the 'actions' subcommand
 agents = typer.Typer()
 
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 __all__ = ["TasksResource", "AsyncTasksResource"]
 
+import json
+
 from ._resource import SyncAPIResource, AsyncAPIResource
 from ..types.tasks import CreateTaskResponse, GetTaskResponse
 
@@ -50,23 +52,29 @@ class TasksResource(SyncAPIResource):
     def create(
         self,
         *,
-        agent: str,
+        agent_name: str,
+        agent_version: str,
         prompt: str,
     ) -> CreateTaskResponse:
         response = self._post(
             "/tasks",
-            body={
-                "agent": agent,
+            json={
+                "agent_name": agent_name,
+                "agent_version": agent_version,
                 "prompt": prompt,
             },
         )
-        return CreateTaskResponse.from_json(response.json())
+        response = response.json()
+        print(json.dumps(response, indent=2))
+        return CreateTaskResponse.from_dict(response)
 
     def get(self, task_id: str) -> GetTaskResponse:
         response = self._get(
             f"/tasks/{task_id}",
         )
-        return GetTaskResponse.from_json(response.json())
+        response = response.json()
+        print(json.dumps(response, indent=2))
+        return GetTaskResponse.from_dict(response)
 
 
 class AsyncTasksResource(AsyncAPIResource):
@@ -79,15 +87,19 @@ class AsyncTasksResource(AsyncAPIResource):
     ) -> CreateTaskResponse:
         response = await self._post(
             "/tasks",
-            body={
+            json={
                 "agent": agent,
                 "prompt": prompt,
             },
         )
-        return CreateTaskResponse.from_json(response.json())
+        response = response.json()
+        print(json.dumps(response, indent=2))
+        return CreateTaskResponse.from_dict(response)
 
     async def get(self, task_id: str) -> GetTaskResponse:
         response = await self._get(
             f"/tasks/{task_id}",
         )
-        return GetTaskResponse.from_json(response.json())
+        response = response.json()
+        print(json.dumps(response, indent=2))
+        return GetTaskResponse.from_dict(response)

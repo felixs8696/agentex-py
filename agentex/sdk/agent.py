@@ -59,9 +59,7 @@ class Agent:
 
             action_name = camel_to_snake(model_cls.__name__)
             self.actions.append(dict(
-                name=action_name,
-                description=model_cls.__doc__.strip(),
-                parameters=action_schema,
+                schema=action_schema,
                 test_payload=test_payload,
             ))
             self._register_fastapi_route(name=action_name, model=model_cls)
