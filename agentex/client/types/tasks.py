@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional, List, Literal, Annotated, Union, Dict, Any
 
 from pydantic import Field
@@ -189,7 +190,16 @@ class WorkflowState(BaseModel):
     )
 
 
-class GetTaskResponse(BaseModel):
+class TaskStatus(str, Enum):
+    CANCELED = "CANCELED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    RUNNING = "RUNNING"
+    TERMINATED = "TERMINATED"
+    TIMED_OUT = "TIMED_OUT"
+
+
+class TaskModel(BaseModel):
     id: str = Field(
         ...,
         title="Unique Task ID",
@@ -208,8 +218,48 @@ class GetTaskResponse(BaseModel):
     context: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
     )
-
-    state: WorkflowState = Field(
-        ...,
-        title="The current state of the task",
+    status: Optional[TaskStatus] = Field(
+        None,
+        title="The current status of the task",
     )
+    status_reason: Optional[str] = Field(
+        None,
+        title="The reason for the current task status",
+    )
+
+
+class TaskModificationType(str, Enum):
+    INSTRUCT = "instruct"
+    APPROVE = "approve"
+    CANCEL = "cancel"
+
+
+class CancelTaskRequest(BaseModel):
+    type: Literal[TaskModificationType.CANCEL] = Field(
+        TaskModificationType.CANCEL,
+        title="The type of instruction to send to the task",
+    )
+
+
+class ApproveTaskRequest(BaseModel):
+    type: Literal[TaskModificationType.APPROVE] = Field(
+        TaskModificationType.APPROVE,
+        title="The type of instruction to send to the task",
+    )
+
+
+class InstructTaskRequest(BaseModel):
+    type: Literal[TaskModificationType.INSTRUCT] = Field(
+        TaskModificationType.INSTRUCT,
+        title="The type of instruction to send to the task",
+    )
+    prompt: str = Field(
+        ...,
+        title="The user's text prompt for the task",
+    )
+
+
+ModifyTaskRequest = Annotated[
+    Union[ApproveTaskRequest, CancelTaskRequest, InstructTaskRequest],
+    Field(discriminator="type")
+]

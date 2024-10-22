@@ -74,3 +74,15 @@ def create_agent(agentex: Agentex, manifest_path: str):
                 agent_package=params['agent_package'],
                 request=params['request'],
             )
+
+
+def get_agent(agentex: Agentex, agent_id: str):
+    return agentex.agents.get(agent_id=agent_id)
+
+
+def list_agents(agentex: Agentex):
+    return agentex.agents.list()
+
+
+def delete_agent(agentex: Agentex, agent_name: str):
+    return agentex.agents.delete(agent_name=agent_name)

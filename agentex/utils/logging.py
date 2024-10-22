@@ -20,7 +20,12 @@ def make_logger(name: str):
     logger.setLevel(logging.INFO)
 
     # Add the RichHandler to the logger to print colored text
-    handler = RichHandler(console=console)
+    handler = RichHandler(
+        console=console,
+        show_level=False,
+        show_path=False,
+        show_time=False,
+    )
     logger.addHandler(handler)
 
     return logger

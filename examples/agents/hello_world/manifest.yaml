@@ -10,7 +10,7 @@ build:
     tag: 0.0.0
 agent:
   name: hello-world
-  version: 0.0.10
+  version: 0.0.0
   description: A simple agent that says hellow to everyone in its community
 action_service:
   port: 8000

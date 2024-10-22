@@ -1,14 +1,10 @@
-# File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-
 from __future__ import annotations
-
-import json
 
 __all__ = ["AgentsResource", "AsyncAgentsResource"]
 
 from agentex.client.resources._resource import SyncAPIResource, AsyncAPIResource
 from agentex.client.types._types import FileTypes
-from agentex.client.types.agents import CreateAgentRequest, CreateAgentResponse
+from agentex.client.types.agents import CreateAgentRequest, AgentModel
 
 
 class AgentsResource(SyncAPIResource):
@@ -18,7 +14,7 @@ class AgentsResource(SyncAPIResource):
         *,
         agent_package: FileTypes,
         request: CreateAgentRequest,
-    ) -> CreateAgentResponse:
+    ) -> AgentModel:
         body = {"request": request.to_json()}
         response = self._post(
             "/agents",
@@ -26,8 +22,26 @@ class AgentsResource(SyncAPIResource):
             files=[("agent_package", agent_package)],
         )
         response = response.json()
-        print(json.dumps(response, indent=2))
-        return CreateAgentResponse.from_dict(response)
+        return AgentModel.from_dict(response)
+
+    def get(self, agent_id: str) -> AgentModel:
+        response = self._get(
+            f"/agents/{agent_id}",
+        )
+        response = response.json()
+        return AgentModel.from_dict(response)
+
+    def list(self):
+        response = self._get(
+            "/agents",
+        )
+        response = response.json()
+        return [AgentModel.from_dict(agent) for agent in response]
+
+    def delete(self, agent_name: str) -> None:
+        self._delete(
+            f"/agents/{agent_name}",
+        )
 
 
 class AsyncAgentsResource(AsyncAPIResource):
@@ -37,7 +51,7 @@ class AsyncAgentsResource(AsyncAPIResource):
         *,
         agent_package: FileTypes,
         request: CreateAgentRequest,
-    ) -> CreateAgentResponse:
+    ) -> AgentModel:
         body = {"request": request.to_json()}
         response = await self._post(
             "/agents",
@@ -45,5 +59,23 @@ class AsyncAgentsResource(AsyncAPIResource):
             files={"agent_package": agent_package},
         )
         response = response.json()
-        print(json.dumps(response, indent=2))
-        return CreateAgentResponse.from_dict(response)
+        return AgentModel.from_dict(response)
+
+    async def get(self, agent_id: str) -> AgentModel:
+        response = await self._get(
+            f"/agents/{agent_id}",
+        )
+        response = response.json()
+        return AgentModel.from_dict(response)
+
+    async def list(self):
+        response = await self._get(
+            "/agents",
+        )
+        response = response.json()
+        return [AgentModel.from_dict(agent) for agent in response]
+
+    async def delete(self, agent_name: str) -> None:
+        await self._delete(
+            f"/agents/{agent_name}",
+        )
