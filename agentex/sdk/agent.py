@@ -2,11 +2,16 @@ from functools import wraps
 from typing import Any, Type, Dict, Optional
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from agentex.utils.json_schema import resolve_refs
+from agentex.utils.logging import make_logger
 from agentex.utils.regex import camel_to_snake
+
+logger = make_logger(__name__)
 
 
 class Agent:
@@ -30,6 +35,7 @@ class Agent:
             summary=description,
             version=version,
         )  # Each agent has its own FastAPI app
+        self._set_error_handlers()
 
     def action(self, test_payload: Optional[Dict] = None) -> Any:
         def decorated(model_cls: Type[BaseModel]):
@@ -92,3 +98,11 @@ class Agent:
             }
 
         return root
+
+    def _set_error_handlers(self):
+        @self.app.exception_handler(RequestValidationError)
+        async def validation_exception_handler(request: Request, exc: RequestValidationError):
+            exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+            logger.info(f'Validation error: {exc_str}')
+            content = {'status_code': 10422, 'message': exc_str, 'data': None}
+            return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)

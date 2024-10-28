@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from agentex.sdk.agent import Agent
-from agentex.sdk.actions import AgentAction
+from agentex.sdk.actions import AgentAction, AgentResponse
 
 agent = Agent(
     name="HelloWorld",
@@ -19,9 +19,11 @@ class HelloAdam(AgentAction):
     """
     agent_name: str = Field(..., description="Your own name, so that Adam can say hello back to you.")
 
-    async def execute(self) -> str:
+    async def execute(self) -> AgentResponse:
         print("Hello Adam!")
-        return f"Adam: 'Hello {self.agent_name}!'"
+        return AgentResponse(
+            message=f"Adam: 'Hello {self.agent_name}!'"
+        )
 
 
 @agent.action(test_payload={"agent_name": "Agentex"})
@@ -31,6 +33,8 @@ class HelloJessica(AgentAction):
     """
     agent_name: str = Field(..., description="Your own name, so that Jessica can say hello back to you.")
 
-    async def execute(self) -> str:
+    async def execute(self) -> AgentResponse:
         print("Hello Jessica!")
-        return f"Jessica: 'Hello {self.agent_name}!'"
+        return AgentResponse(
+            message=f"Jessica: 'Hello {self.agent_name}!'"
+        )
