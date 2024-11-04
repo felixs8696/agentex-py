@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Union
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+from pydantic.json_schema import GenerateJsonSchema
 
 from agentex.client.types.tasks import Message
+from agentex.utils.model_utils import BaseModel
 
 
 class AgentState(BaseModel):
@@ -42,11 +44,21 @@ class AgentResponse(BaseModel):
                     "a larger payload that the agent doesn't need persistent access to, use the context field."
     )
     artifacts: Optional[List[Artifact]] = Field(
-        ...,
+        None,
         description="If a larger payload is needed to be stored in the agent's context, use this field. This will not "
                     "be persistently stored in the agent's context, but the agent knows how to retrieve this "
                     "information when it needs it. It will be exposed to the user on the UI as an artifact."
     )
+
+
+class AgentActionGenerationJsonSchema(GenerateJsonSchema):
+    def generate(self, schema, mode='validation'):
+        json_schema = super().generate(schema, mode=mode)
+        # Exclude the state field from the generated schema
+        properties = json_schema.get('properties', {})
+        if 'state' in properties:
+            del properties['state']
+        return json_schema
 
 
 class AgentAction(BaseModel, ABC):
@@ -60,3 +72,15 @@ class AgentAction(BaseModel, ABC):
     @abstractmethod
     async def execute(self) -> AgentResponse:
         pass
+
+    @classmethod
+    def model_json_schema(
+        cls,
+        *args: Any,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        return super().model_json_schema(
+            *args,
+            **kwargs,
+            schema_generator=AgentActionGenerationJsonSchema,
+        )

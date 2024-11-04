@@ -8,7 +8,7 @@ T = TypeVar("T", bound="BaseModel")
 
 
 class BaseModel(PydanticBaseModel):
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True, )
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     @classmethod
     def from_model(cls: Type[T], model: Optional[T] = None) -> Optional[T]:
