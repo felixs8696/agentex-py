@@ -6,6 +6,7 @@ from temporalio.common import RetryPolicy
 
 from agentex.client.types.tasks import Completion
 from agentex.sdk.execution.helpers import WorkflowHelper
+from agentex.sdk.execution.workflow import BaseWorkflow
 from agentex.sdk.lib.activities.action_loop import DecideActionParams, TakeActionParams
 from agentex.sdk.lib.activities.names import ActivityName
 from agentex.src.entities.actions import Action
@@ -17,7 +18,9 @@ logger = make_logger(__name__)
 class ActionLoop:
 
     @staticmethod
-    async def run(task_id: str, thread_name: str, model: str, actions: List[Type[Action]]) -> str:
+    async def run(
+        parent_workflow: BaseWorkflow, task_id: str, thread_name: str, model: str, actions: List[Type[Action]]
+    ) -> str:
         content = None
         finish_reason = None
         while finish_reason not in ("stop", "length", "content_filter"):
@@ -34,6 +37,7 @@ class ActionLoop:
                 retry_policy=RetryPolicy(maximum_attempts=5),
                 response_model=Completion,
             )
+            parent_workflow.event_log.append({"event": "decision_made", "completion": completion.dict()})
             finish_reason = completion.finish_reason
             decision = completion.message
             tool_calls = decision.tool_calls
@@ -43,6 +47,7 @@ class ActionLoop:
             take_action_activities = []
             if decision.tool_calls:
                 logger.info(f"Executing tool calls: {tool_calls}")
+                parent_workflow.event_log.append({"event": "executing_tool_calls"})
                 for tool_call in tool_calls:
                     take_action_activity = asyncio.create_task(
                         WorkflowHelper.execute_activity(
@@ -56,6 +61,7 @@ class ActionLoop:
                             retry_policy=RetryPolicy(maximum_attempts=5),
                         )
                     )
+                    parent_workflow.event_log.append({"event": "executing_tool_call", "tool_call": tool_call.dict()})
                     take_action_activities.append(take_action_activity)
 
             # Wait for all tool activities to complete
