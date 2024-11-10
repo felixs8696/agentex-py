@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 # Importing hypothetical AgentEX SDK components
 # Ensure that agentex-sdk is installed and accessible
-from agentex.sdk.actions import AgentAction, AgentResponse, Artifact
+from agentex.src.entities.actions import Artifact, ActionResponse, Action
 from agentex.sdk.agent import Agent
 
 
@@ -42,7 +42,7 @@ agent = Agent(
 
 # Action to Fetch News
 @agent.action(test_payload={"keyword": "AI", "language": "en", "period": "7d"})
-class FetchNewsAction(AgentAction):
+class FetchNewsAction(Action):
     """
     Fetch the latest news articles related to AI using GoogleNews.
     """
@@ -59,19 +59,19 @@ class FetchNewsAction(AgentAction):
         description="The time period for fetching news (e.g., '1d', '7d', '30d')."
     )
 
-    async def execute(self) -> AgentResponse:
+    async def execute(self) -> ActionResponse:
         try:
             gn = GoogleNews(lang=self.language, period=self.period)
             gn.search(self.keyword)
             results = gn.result()
             articles = [NewsArticle(**article) for article in results]
-            return AgentResponse(
+            return ActionResponse(
                 message=f"""Fetched {len(articles)} articles related to '{self.keyword}':
 {'\n\n'.join([str(article.dict()) for article in articles])},
 """,
             )
         except Exception as e:
-            return AgentResponse(
+            return ActionResponse(
                 message=f"Failed to fetch news articles: {str(e)}",
                 success=False
             )
@@ -79,7 +79,7 @@ class FetchNewsAction(AgentAction):
 
 # Action to Process News with Provided Companies
 @agent.action(test_payload={"fetched_articles": [], "provided_companies": []})
-class ProcessNewsAction(AgentAction):
+class ProcessNewsAction(Action):
     """
     Process fetched news articles to filter relevant articles based on provided companies.
     """
@@ -92,7 +92,7 @@ class ProcessNewsAction(AgentAction):
         description="List of provided and categorized companies."
     )
 
-    async def execute(self) -> AgentResponse:
+    async def execute(self) -> ActionResponse:
         try:
             relevant_articles = []
             company_names = [company.name for company in self.provided_companies]
@@ -112,13 +112,13 @@ class ProcessNewsAction(AgentAction):
                         })
                         break  # Avoid duplicate entries if multiple companies match
 
-            return AgentResponse(
+            return ActionResponse(
                 message=f"""Processed articles. Found {len(relevant_articles)} relevant articles.
 {'\n\n'.join([str(article) for article in relevant_articles])},
 """,
             )
         except Exception as e:
-            return AgentResponse(
+            return ActionResponse(
                 message=f"Failed to process news articles: {str(e)}",
             )
 
@@ -126,7 +126,7 @@ class ProcessNewsAction(AgentAction):
 # Action to Write Summary Document
 @agent.action(test_payload={"name": "AI_Tech_News_Summary", "description": "Summary of latest AI tech news.",
                             "markdown_content": "# Sample"})
-class WriteSummaryAction(AgentAction):
+class WriteSummaryAction(Action):
     """
     Write a summarized document of relevant news articles.
     """
@@ -143,13 +143,13 @@ class WriteSummaryAction(AgentAction):
         description="The markdown content of the summary document."
     )
 
-    async def execute(self) -> AgentResponse:
+    async def execute(self) -> ActionResponse:
         try:
             # Save the markdown content to a file.
             filename = f"{self.name.replace(' ', '_')}.md"
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(self.markdown_content)
-            return AgentResponse(
+            return ActionResponse(
                 message=f"Summary document '{filename}' written successfully.",
                 artifacts=[
                     Artifact(
@@ -160,6 +160,6 @@ class WriteSummaryAction(AgentAction):
                 ]
             )
         except Exception as e:
-            return AgentResponse(
+            return ActionResponse(
                 message=f"Failed to write summary document: {str(e)}",
             )

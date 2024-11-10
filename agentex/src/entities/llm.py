@@ -1,35 +1,32 @@
-from enum import Enum
-from typing import Optional, List, Literal, Annotated, Union, Dict, Any
+from typing import List, Optional, Union, Type
+from typing import Literal, Annotated
 
 from pydantic import Field
 
 from agentex.utils.model_utils import BaseModel
 
 
-class CreateTaskRequest(BaseModel):
-    agent: str = Field(
-        ...,
-        title="The unique name of the agent to use to run the task",
-    )
-    prompt: str = Field(
-        ...,
-        title="The user's text prompt for the task",
-    )
-
-
-class CreateTaskResponse(BaseModel):
-    id: str = Field(
-        ...,
-        title="Unique Task ID",
-    )
-    agent_id: str = Field(
-        ...,
-        title="The ID of the agent that is responsible for this task",
-    )
-    prompt: str = Field(
-        ...,
-        title="The user's text prompt for the task",
-    )
+class LLMConfig(BaseModel):
+    model: str
+    messages: List = []
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    n: Optional[int] = None
+    stream: Optional[bool] = None
+    stream_options: Optional[dict] = None
+    stop: Optional[Union[str, list]] = None
+    max_tokens: Optional[int] = None
+    max_completion_tokens: Optional[int] = None
+    presence_penalty: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+    logit_bias: Optional[dict] = None
+    response_format: Optional[Union[dict, Type[BaseModel]]] = None
+    seed: Optional[int] = None
+    tools: Optional[List] = None
+    tool_choice: Optional[str] = None
+    parallel_tool_calls: Optional[bool] = None
+    logprobs: Optional[bool] = None
+    top_logprobs: Optional[int] = None
 
 
 class ContentPartText(BaseModel):
@@ -172,113 +169,4 @@ Message = Annotated[
     Field(
         discriminator="role"
     )
-]
-
-
-class Choice(BaseModel):
-    finish_reason: Literal["stop", "length", "content_filter", "tool_calls"]
-    index: int
-    message: AssistantMessage
-
-
-class Usage(BaseModel):
-    prompt_tokens: int
-    completion_tokens: int
-    total_tokens: int
-
-
-class Completion(BaseModel):
-    choices: List[Choice]
-    created: Optional[str] = None
-    model: Optional[str] = None
-    usage: Usage
-
-
-class WorkflowState(BaseModel):
-    status: str = Field(
-        ...,
-        title="The status of the task",
-    )
-    is_terminal: bool = Field(
-        ...,
-        title="Whether the task is in a terminal state",
-    )
-    reason: Optional[str] = Field(
-        None,
-        title="The reason for the terminal state",
-    )
-
-
-class TaskStatus(str, Enum):
-    CANCELED = "CANCELED"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    RUNNING = "RUNNING"
-    TERMINATED = "TERMINATED"
-    TIMED_OUT = "TIMED_OUT"
-
-
-class TaskModel(BaseModel):
-    id: str = Field(
-        ...,
-        title="Unique Task ID",
-    )
-    agent_id: str = Field(
-        ...,
-        title="The ID of the agent that is responsible for this task",
-    )
-    prompt: str = Field(
-        ...,
-        title="The user's text prompt for the task",
-    )
-    messages: Optional[List[Message]] = Field(
-        default_factory=list,
-    )
-    context: Optional[Dict[str, Any]] = Field(
-        default_factory=dict,
-    )
-    status: Optional[TaskStatus] = Field(
-        None,
-        title="The current status of the task",
-    )
-    status_reason: Optional[str] = Field(
-        None,
-        title="The reason for the current task status",
-    )
-
-
-class TaskModificationType(str, Enum):
-    INSTRUCT = "instruct"
-    APPROVE = "approve"
-    CANCEL = "cancel"
-
-
-class CancelTaskRequest(BaseModel):
-    type: Literal[TaskModificationType.CANCEL] = Field(
-        TaskModificationType.CANCEL,
-        title="The type of instruction to send to the task",
-    )
-
-
-class ApproveTaskRequest(BaseModel):
-    type: Literal[TaskModificationType.APPROVE] = Field(
-        TaskModificationType.APPROVE,
-        title="The type of instruction to send to the task",
-    )
-
-
-class InstructTaskRequest(BaseModel):
-    type: Literal[TaskModificationType.INSTRUCT] = Field(
-        TaskModificationType.INSTRUCT,
-        title="The type of instruction to send to the task",
-    )
-    prompt: str = Field(
-        ...,
-        title="The user's text prompt for the task",
-    )
-
-
-ModifyTaskRequest = Annotated[
-    Union[ApproveTaskRequest, CancelTaskRequest, InstructTaskRequest],
-    Field(discriminator="type")
 ]

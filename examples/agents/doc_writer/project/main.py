@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from agentex.sdk.actions import AgentAction, AgentResponse, Artifact
+from agentex.src.entities.actions import Artifact, ActionResponse, Action
 from agentex.sdk.agent import Agent
 
 agent = Agent(
@@ -15,7 +15,7 @@ agent = Agent(
 
 
 @agent.action(test_payload={"name": "test", "description": "test", "markdown_content": "test"})
-class WriteDocument(AgentAction):
+class WriteDocument(Action):
     """
     Write a document with the given content.
     """
@@ -30,8 +30,8 @@ class WriteDocument(AgentAction):
     )
     markdown_content: str = Field(..., description="The content of the document to write written in markdown.")
 
-    async def execute(self) -> AgentResponse:
-        return AgentResponse(
+    async def execute(self) -> ActionResponse:
+        return ActionResponse(
             message=f"Document '{self.name}' written successfully.",
             artifacts=[
                 Artifact(
