@@ -1,15 +1,14 @@
 import asyncio
 from datetime import timedelta
-from typing import List, Type
 
 from temporalio.common import RetryPolicy
 
-from agentex.client.types.tasks import Completion
 from agentex.sdk.execution.helpers import WorkflowHelper
 from agentex.sdk.execution.workflow import BaseWorkflow
 from agentex.sdk.lib.activities.action_loop import DecideActionParams, TakeActionParams
 from agentex.sdk.lib.activities.names import ActivityName
-from agentex.src.entities.actions import Action, ActionResponse
+from agentex.src.entities.actions import ActionResponse
+from agentex.src.entities.state import Completion
 from agentex.utils.logging import make_logger
 
 logger = make_logger(__name__)
@@ -35,8 +34,9 @@ class ActionLoop:
                 response_model=Completion,
             )
             parent_workflow.event_log.append({"event": "decision_made", "completion": completion.to_dict()})
-            finish_reason = completion.finish_reason
-            decision = completion.message
+            top_choice = completion.choices[0]
+            finish_reason = top_choice.finish_reason
+            decision = top_choice.message
             tool_calls = decision.tool_calls
             content = decision.content
 
@@ -50,9 +50,11 @@ class ActionLoop:
                         WorkflowHelper.execute_activity(
                             activity_name=ActivityName.TAKE_ACTION,
                             arg=TakeActionParams(
+                                task_id=task_id,
+                                thread_name=thread_name,
                                 tool_call_id=tool_call.id,
-                                tool_name=tool_call.name,
-                                tool_args=tool_call.args,
+                                tool_name=tool_call.function.name,
+                                tool_args=tool_call.function.arguments,
                             ),
                             start_to_close_timeout=timedelta(seconds=60),
                             retry_policy=RetryPolicy(maximum_attempts=5),

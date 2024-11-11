@@ -12,7 +12,7 @@ from agentex.src.services.agent_state_repository import AgentStateRepository
 from agentex.src.services.agent_state_service import AgentStateService
 from examples.agents.news_ai.project.constants import TASK_QUEUE_NAME
 from workflow import NewsAIWorkflow
-from examples.agents.news_ai.project.activities import FetchNews, ProcessNews, WriteSummary
+from examples.agents.news_ai.project.activities import FetchNews, ProcessNews, WriteSummary, ReportTerminalFailure
 
 
 async def main():
@@ -32,6 +32,7 @@ async def main():
         FetchNews,
         ProcessNews,
         WriteSummary,
+        ReportTerminalFailure,
     ])
 
     agent_state_activities = AgentStateActivities(

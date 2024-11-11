@@ -1,3 +1,5 @@
+import json
+
 from temporalio import activity
 
 from temporalio import activity
@@ -22,7 +24,7 @@ class TakeActionParams(BaseModel):
     thread_name: str
     tool_call_id: str
     tool_name: str
-    tool_args: dict
+    tool_args: str
 
 
 class ActionLoopActivities:
@@ -58,7 +60,7 @@ class ActionLoopActivities:
         await self.agent_state.threads.append_message(
             task_id=task_id,
             thread_name=thread_name,
-            messages=message
+            message=message
         )
         return completion
 
@@ -76,7 +78,7 @@ class ActionLoopActivities:
         exception = None
         try:
             action_class = self.action_class_registry.get(tool_name)
-            action_response = await action_class(**tool_args).execute()
+            action_response = await action_class(**json.loads(tool_args)).execute()
         except Exception as error:
             # Log the error so the agent can fix it if possible (the activity retry loop should handle)
             action_response = ActionResponse(

@@ -21,7 +21,7 @@ class Usage(BaseModel):
 
 class Completion(BaseModel):
     choices: List[Choice]
-    created: Optional[str] = None
+    created: Optional[int] = None
     model: Optional[str] = None
     usage: Usage
 

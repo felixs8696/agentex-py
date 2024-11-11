@@ -1,5 +1,7 @@
 from typing import List
 
+from GoogleNews import GoogleNews
+
 from agentex.src.entities.actions import Action, ActionResponse, Artifact
 from agentex.utils.model_utils import BaseModel
 
@@ -111,3 +113,15 @@ class WriteSummary(Action):
             return ActionResponse(
                 message=f"Failed to write summary document: {str(e)}",
             )
+
+
+class ReportTerminalFailure(Action):
+    """
+    Report a terminal failure in the workflow.
+    """
+    message: str
+
+    async def execute(self) -> ActionResponse:
+        return ActionResponse(
+            message=self.message,
+        )
