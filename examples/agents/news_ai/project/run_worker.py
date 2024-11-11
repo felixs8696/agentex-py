@@ -10,10 +10,9 @@ from agentex.src.adapters.notifications.adapter_ntfy import NtfyGateway
 from agentex.src.entities.actions import ActionRegistry
 from agentex.src.services.agent_state_repository import AgentStateRepository
 from agentex.src.services.agent_state_service import AgentStateService
+from examples.agents.news_ai.project.constants import TASK_QUEUE_NAME
 from workflow import NewsAIWorkflow
-from examples.agents.temporal_news_ai.project.activities import FetchNews, ProcessNews, WriteSummary
-
-TASK_QUEUE_NAME = "news_ai_task_queue"
+from examples.agents.news_ai.project.activities import FetchNews, ProcessNews, WriteSummary
 
 
 async def main():

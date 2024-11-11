@@ -9,8 +9,8 @@ build:
     repository: agentex/examples/news-ai
     tag: 0.0.0
 agent:
+  name: news-ai # Must be the same name as the workflow's class name
+  description: An AI agent that dynamically discovers and tracks the hottest AI tech companies and news.
+workflow:
   name: news-ai
-  version: 0.0.3
-  description: An agent that compiles news summaries for the user
-action_service:
-  port: 8000
+  queue_name: news_ai_task_queue

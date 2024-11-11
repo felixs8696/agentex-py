@@ -35,7 +35,7 @@ class FetchNews(Action):
             articles = [NewsArticle(**article) for article in results]
             return ActionResponse(
                 message=f"""Fetched {len(articles)} articles related to '{self.keyword}':
-{'\n\n'.join([str(article.dict()) for article in articles])},
+{'\n\n'.join([str(article.to_dict()) for article in articles])},
         """,
             )
         except Exception as e:

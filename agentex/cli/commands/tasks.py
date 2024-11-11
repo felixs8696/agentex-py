@@ -19,9 +19,6 @@ def submit(
     agent: str = typer.Option(
         None, help="Name of the agent you want to submit the task to"
     ),
-    version: str = typer.Option(
-        None, help="Version of the agent you want to submit the task to"
-    ),
     task: str = typer.Option(
         None, help="Prompt for the task"
     ),
@@ -43,7 +40,6 @@ def submit(
     task = submit_task(
         agentex=client,
         agent_name=agent,
-        agent_version=version,
         task=task,
         require_approval=require_approval,
     )

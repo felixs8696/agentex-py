@@ -22,6 +22,9 @@ class AgentsResource(SyncAPIResource):
             files=[("agent_package", agent_package)],
         )
         response = response.json()
+        print("AGENT RESPONSE",
+            response
+        )
         return AgentModel.from_dict(response)
 
     def get(self, agent_id: str) -> AgentModel:

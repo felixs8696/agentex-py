@@ -67,26 +67,23 @@ class BuildConfig(BaseModel):
 class AgentConfig(BaseModel):
     name: str = Field(
         ...,
-        description="The name of the agent."
+        description="The name of the agent.",
+        pattern=r"^[a-z0-9-]+$",
     )
     description: str = Field(
         ...,
         description="The description of the agent."
     )
-    version: str = Field(
-        pattern=r"^[a-zA-Z0-9-\.]+$",
-    )
 
 
-class ActionServiceConfig(BaseModel):
-    """
-    Represents the configuration for the service.
-    """
-
-    port: int = Field(
+class WorkflowConfig(BaseModel):
+    name: str = Field(
         ...,
-        description="The port on which the service will run inside the container. This is the port that the "
-                    "command is pointing at in your Dockerfile."
+        description="The name of the agent workflow."
+    )
+    queue_name: str = Field(
+        ...,
+        description="The queue name for the agent workflow."
     )
 
 
@@ -97,7 +94,7 @@ class AgentManifestConfig(BaseModel):
 
     build: BuildConfig
     agent: AgentConfig
-    action_service: ActionServiceConfig
+    workflow: WorkflowConfig
 
     def context_manager(self, build_context_root: Path) -> BuildContextManager:
         """

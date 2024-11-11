@@ -1,10 +1,24 @@
-# Use a lightweight Python image
 FROM python:3.12-slim
 
-# Set up the working directory
-WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    htop \
+    vim \
+    curl \
+    tar \
+    python3-dev \
+    postgresql-client \
+    build-essential \
+    libpq-dev \
+    gcc \
+    netcat-openbsd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install uvicorn
+# Install tctl (Temporal CLI)
+RUN curl -L https://github.com/temporalio/tctl/releases/download/v1.18.1/tctl_1.18.1_linux_arm64.tar.gz -o /tmp/tctl.tar.gz && \
+    tar -xzf /tmp/tctl.tar.gz -C /usr/local/bin && \
+    chmod +x /usr/local/bin/tctl && \
+    rm /tmp/tctl.tar.gz
 
 # Copy the requirements file
 COPY agentex-py /app/agentex-py
@@ -16,5 +30,5 @@ RUN pip install --ignore-installed -r requirements.txt
 
 WORKDIR /app/agentex-py/examples/agents/news_ai/project
 
-# Set the entrypoint to run FastAPI using Uvicorn
-CMD ["uvicorn", "main:agent.app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Run the FastAPI app
+CMD ["python", "-m", "run_worker"]

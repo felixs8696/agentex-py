@@ -18,53 +18,19 @@ class CreateAgentRequest(BaseModel):
         ...,
         description="The description of the agent."
     )
-    version: str = Field(
+    workflow_name: str = Field(
         ...,
-        description="The version of the agent."
+        description="The name of the workflow that defines the agent."
     )
-    action_service_port: int = Field(
+    workflow_queue_name: str = Field(
         ...,
-        description="The port on which the service will run inside the container. This is the port that the "
-                    "command is pointing at in your Dockerfile. It should be specified in the action manifest."
-    )
-
-
-class ActionSchemaModel(BaseModel):
-    name: str = Field(
-        ...,
-        description="The name of the action. If you try to create a new action with the same name as an existing "
-                    "action, the the version must be changed to create a new version of the action."
-    )
-    description: str = Field(
-        ...,
-        description="The description of the action."
-    )
-    parameters: Dict[str, Any] = Field(
-        ...,
-        description="The JSON schema describing the parameters that the action takes in"
-    )
-
-
-class ActionModel(BaseModel):
-    """
-    Every Agent server will expose a REST API at the root route that will allow Agentex to fetch the agent's metadata.
-    This includes a list of actions that the agent can perform which are defined by this spec.
-    """
-    schema: ActionSchemaModel = Field(
-        ...,
-        description="The JSON schema describing the parameters that the action takes in"
-    )
-    test_payload: Optional[Dict[str, Any]] = Field(
-        None,
-        description="The payload to use when testing the action."
+        description="The name of the queue to send tasks to."
     )
 
 
 class AgentStatus(str, Enum):
     PENDING = "Pending"
     BUILDING = "Building"
-    IDLE = "Idle"
-    ACTIVE = "Active"
     READY = "Ready"
     FAILED = "Failed"
     UNKNOWN = "Unknown"
@@ -82,22 +48,6 @@ class AgentModel(BaseModel):
     description: str = Field(
         ...,
         description="The description of the action."
-    )
-    version: str = Field(
-        ...,
-        description="The version of the action."
-    )
-    model: Optional[str] = Field(
-        None,
-        description="The LLM model powering the agent."
-    )
-    instructions: Optional[str] = Field(
-        None,
-        description="The instructions for the agent."
-    )
-    actions: Optional[List[ActionModel]] = Field(
-        default=None,
-        description="The actions that the agent can perform."
     )
     status: AgentStatus = Field(
         AgentStatus.UNKNOWN,

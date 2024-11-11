@@ -1,2 +1,0 @@
--e ../../../../agentex-py
-GoogleNews

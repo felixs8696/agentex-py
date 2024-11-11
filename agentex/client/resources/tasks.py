@@ -14,7 +14,6 @@ class TasksResource(SyncAPIResource):
         self,
         *,
         agent_name: str,
-        agent_version: str,
         prompt: str,
         require_approval: Optional[bool] = False,
     ) -> CreateTaskResponse:
@@ -22,7 +21,6 @@ class TasksResource(SyncAPIResource):
             "/tasks",
             json={
                 "agent_name": agent_name,
-                "agent_version": agent_version,
                 "prompt": prompt,
                 "require_approval": require_approval,
             },

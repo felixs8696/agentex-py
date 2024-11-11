@@ -9,7 +9,7 @@ from agentex.sdk.execution.helpers import WorkflowHelper
 from agentex.sdk.execution.workflow import BaseWorkflow
 from agentex.sdk.lib.activities.action_loop import DecideActionParams, TakeActionParams
 from agentex.sdk.lib.activities.names import ActivityName
-from agentex.src.entities.actions import Action
+from agentex.src.entities.actions import Action, ActionResponse
 from agentex.utils.logging import make_logger
 
 logger = make_logger(__name__)
@@ -18,9 +18,7 @@ logger = make_logger(__name__)
 class ActionLoop:
 
     @staticmethod
-    async def run(
-        parent_workflow: BaseWorkflow, task_id: str, thread_name: str, model: str, actions: List[Type[Action]]
-    ) -> str:
+    async def run(parent_workflow: BaseWorkflow, task_id: str, thread_name: str, model: str) -> str:
         content = None
         finish_reason = None
         while finish_reason not in ("stop", "length", "content_filter"):
@@ -31,13 +29,12 @@ class ActionLoop:
                     task_id=task_id,
                     thread_name=thread_name,
                     model=model,
-                    actions=actions,
                 ),
                 start_to_close_timeout=timedelta(seconds=60),
                 retry_policy=RetryPolicy(maximum_attempts=5),
                 response_model=Completion,
             )
-            parent_workflow.event_log.append({"event": "decision_made", "completion": completion.dict()})
+            parent_workflow.event_log.append({"event": "decision_made", "completion": completion.to_dict()})
             finish_reason = completion.finish_reason
             decision = completion.message
             tool_calls = decision.tool_calls
@@ -59,9 +56,10 @@ class ActionLoop:
                             ),
                             start_to_close_timeout=timedelta(seconds=60),
                             retry_policy=RetryPolicy(maximum_attempts=5),
+                            response_model=ActionResponse,
                         )
                     )
-                    parent_workflow.event_log.append({"event": "executing_tool_call", "tool_call": tool_call.dict()})
+                    parent_workflow.event_log.append({"event": "executing_tool_call", "tool_call": tool_call.to_dict()})
                     take_action_activities.append(take_action_activity)
 
             # Wait for all tool activities to complete

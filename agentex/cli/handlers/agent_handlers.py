@@ -63,8 +63,8 @@ def create_agent(agentex: Agentex, manifest_path: str):
                 request=CreateAgentRequest(
                     name=agent_manifest.agent.name,
                     description=agent_manifest.agent.description,
-                    version=agent_manifest.agent.version,
-                    action_service_port=agent_manifest.action_service.port,
+                    workflow_name=agent_manifest.workflow.name,
+                    workflow_queue_name=agent_manifest.workflow.queue_name,
                 )
             )
 
