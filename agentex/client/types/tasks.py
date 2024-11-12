@@ -15,6 +15,11 @@ class CreateTaskRequest(BaseModel):
         ...,
         title="The user's text prompt for the task",
     )
+    require_approval: Optional[bool] = Field(
+        False,
+        title="Whether the task requires human approval in order to complete. "
+              "If false, the task is left running until the human sends a finish",
+    )
 
 
 class CreateTaskResponse(BaseModel):

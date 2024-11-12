@@ -7,7 +7,6 @@ NTFY_BASE_URL = "https://ntfy.sh/"
 
 
 class NtfyGateway(NotificationPort):
-
     async def send(self, notification: NotificationRequest) -> Notification:
         response = requests.post(
             url=NTFY_BASE_URL,

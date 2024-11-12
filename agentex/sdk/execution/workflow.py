@@ -12,6 +12,7 @@ from agentex.sdk.execution.helpers import WorkflowHelper
 from agentex.sdk.execution.names import SignalName, QueryName
 from agentex.sdk.lib.activities.names import ActivityName
 from agentex.sdk.lib.activities.state import AppendMessagesToThreadParams
+from agentex.src.entities.agents import Agent
 from agentex.src.entities.task import Task
 from agentex.utils.logging import make_logger
 from agentex.utils.model_utils import BaseModel
@@ -26,6 +27,7 @@ class ExecutionStatus(str, Enum):
 
 class AgentTaskWorkflowParams(BaseModel):
     task: Task
+    agent: Agent
     require_approval: Optional[bool] = False
 
 

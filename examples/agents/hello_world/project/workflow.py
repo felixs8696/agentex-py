@@ -13,22 +13,19 @@ from agentex.sdk.lib.activities.state import AppendMessagesToThreadParams
 from agentex.sdk.lib.workflows.action_loop import ActionLoop
 from agentex.src.entities.notifications import NotificationRequest
 from agentex.utils.logging import make_logger
-from examples.agents.news_ai.project.activities import FetchNews, ProcessNews, WriteSummary
-from examples.agents.news_ai.project.constants import AGENT_NAME
+from constants import AGENT_NAME
 
 logger = make_logger(__name__)
 
 
 @workflow.defn(name=AGENT_NAME)
-class NewsAIWorkflow(BaseWorkflow):
+class HelloWorldWorkflow(BaseWorkflow):
 
     def __init__(self):
         super().__init__(display_name=AGENT_NAME)
         self.model = "gpt-4o-mini"
         self.instructions = (
-            "You are an AI agent designed to fetch and summarize the latest AI technology news. "
-            "Your tasks include fetching news articles, processing provided company data, "
-            "and compiling a summarized document suitable for a CEO of a budding startup. "
+            "You are an AI agent that says hello to everyone in the community"
         )
 
     @workflow.run

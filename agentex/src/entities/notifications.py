@@ -48,7 +48,3 @@ class Notification(BaseModel):
     message: str = Field(..., description="Message body")
     title: Optional[str] = Field(None, description="Message title")
     tags: Optional[List[str]] = Field(None, description="List of tags that may or not map to emojis")
-    priority: Optional[int] = Field(None, description="Message priority with 1=min, 3=default and 5=max")
-    click: Optional[str] = Field(None, description="Website opened when notification is clicked")
-    actions: Optional[List[Action]] = Field(None, description="Custom user action buttons for notifications")
-    attachment: Optional[Attachment] = Field(None, description="Details about an attachment (name, URL, size, ...)")

@@ -4,6 +4,7 @@ from GoogleNews import GoogleNews
 
 from agentex.src.entities.actions import Action, ActionResponse, Artifact
 from agentex.utils.model_utils import BaseModel
+from agentex.utils.parsing import remove_query_params
 
 
 class NewsArticle(BaseModel):
@@ -68,7 +69,7 @@ class ProcessNews(Action):
                                              "Other"),
                             "title": article.title,
                             "description": article.desc,
-                            "link": article.link,
+                            "link": remove_query_params(article.link),
                             "date": article.date,
                             "media": article.media
                         })
