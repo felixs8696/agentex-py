@@ -5,11 +5,8 @@ build:
       - agentex-py
     dockerfile: agentex-py/examples/agents/news_ai/Dockerfile
     dockerignore: agentex-py/examples/agents/news_ai/.dockerignore
-  image:
-    repository: agentex/examples/news-ai
-    tag: 0.0.0
 agent:
-  name: news-ai # Must be the same name as the workflow's class name
+  name: news-ai
   description: An AI agent that dynamically discovers and tracks the hottest AI tech companies and news.
 workflow:
   name: news-ai

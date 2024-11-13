@@ -5,7 +5,8 @@ __all__ = ["TasksResource", "AsyncTasksResource"]
 from typing import Optional
 
 from ._resource import SyncAPIResource, AsyncAPIResource
-from ..types.tasks import CreateTaskResponse, TaskModel, ModifyTaskRequest
+from ..types.tasks import CreateTaskResponse, ModifyTaskRequest
+from ...src.entities.task import TaskModel
 
 
 class TasksResource(SyncAPIResource):

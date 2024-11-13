@@ -24,14 +24,14 @@ class ActionLoop:
             # Execute decision activity
             completion = await WorkflowHelper.execute_activity(
                 activity_name=ActivityName.DECIDE_ACTION,
-                arg=DecideActionParams(
+                request=DecideActionParams(
                     task_id=task_id,
                     thread_name=thread_name,
                     model=model,
                 ),
+                response_type=Completion,
                 start_to_close_timeout=timedelta(seconds=60),
                 retry_policy=RetryPolicy(maximum_attempts=5),
-                response_model=Completion,
             )
             parent_workflow.event_log.append({"event": "decision_made", "completion": completion.to_dict()})
             top_choice = completion.choices[0]
@@ -49,16 +49,16 @@ class ActionLoop:
                     take_action_activity = asyncio.create_task(
                         WorkflowHelper.execute_activity(
                             activity_name=ActivityName.TAKE_ACTION,
-                            arg=TakeActionParams(
+                            request=TakeActionParams(
                                 task_id=task_id,
                                 thread_name=thread_name,
                                 tool_call_id=tool_call.id,
                                 tool_name=tool_call.function.name,
                                 tool_args=tool_call.function.arguments,
                             ),
+                            response_type=ActionResponse,
                             start_to_close_timeout=timedelta(seconds=60),
                             retry_policy=RetryPolicy(maximum_attempts=5),
-                            response_model=ActionResponse,
                         )
                     )
                     parent_workflow.event_log.append({"event": "executing_tool_call", "tool_call": tool_call.to_dict()})

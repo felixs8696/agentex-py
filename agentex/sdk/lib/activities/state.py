@@ -14,6 +14,11 @@ class AppendMessagesToThreadParams(BaseModel):
     messages: List[Message]
 
 
+class GetMessagesFromThreadParams(BaseModel):
+    task_id: str
+    thread_name: str
+
+
 class AgentStateActivities:
 
     def __init__(self, agent_state: AgentStateService):
@@ -38,7 +43,10 @@ class AgentStateActivities:
         return messages
 
     @activity.defn(name=ActivityName.GET_MESSAGES_FROM_THREAD)
-    async def get_messages_from_thread(self, task_id: str, thread_name: str) -> List[Message]:
+    async def get_messages_from_thread(self, params: GetMessagesFromThreadParams) -> List[Message]:
+        task_id = params.task_id
+        thread_name = params.thread_name
+        
         messages = await self.agent_state.threads.get_messages(
             task_id=task_id,
             thread_name=thread_name

@@ -42,26 +42,12 @@ class BuildContext(BaseModel):
     )
 
 
-class ImageConfig(BaseModel):
-    """
-    Represents the configuration for building the Docker image.
-    """
-
-    repository: str = Field(
-        pattern=r"^[a-zA-Z0-9-\/]+$",
-    )
-    tag: str = Field(
-        pattern=r"^[a-zA-Z0-9-\.]+$",
-    )
-
-
 class BuildConfig(BaseModel):
     """
     Represents a configuration for building the action as a Docker image.
     """
 
     context: BuildContext
-    image: ImageConfig
 
 
 class AgentConfig(BaseModel):

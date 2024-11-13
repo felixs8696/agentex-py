@@ -5,11 +5,8 @@ build:
       - agentex-py
     dockerfile: agentex-py/examples/agents/hello_world/Dockerfile
     dockerignore: agentex-py/examples/agents/hello_world/.dockerignore
-  image:
-    repository: agentex/examples/hello-world
-    tag: 0.0.0
 agent:
-  name: hello-world # Must be the same name as the workflow's class name
+  name: hello-world
   description: An AI agent that just says hello to everyone in the community.
 workflow:
   name: hello-world

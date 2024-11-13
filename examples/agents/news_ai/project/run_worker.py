@@ -50,6 +50,7 @@ async def main():
     await worker.run(
         activities=[
             agent_state_activities.append_messages_to_thread,
+            agent_state_activities.get_messages_from_thread,
             action_loop_activities.decide_action,
             action_loop_activities.take_action,
             notification_activities.send_notification,
