@@ -8,13 +8,12 @@ from agentex.sdk.lib.activities.state import AgentStateActivities
 from agentex.src.adapters.kv_store.adapter_redis import RedisRepository
 from agentex.src.adapters.llm.adapter_litellm import LiteLLMGateway
 from agentex.src.adapters.notifications.adapter_ntfy import NtfyGateway
-from agentex.src.entities.actions import ActionRegistry
 from agentex.src.services.agent_state_repository import AgentStateRepository
 from agentex.src.services.agent_state_service import AgentStateService
 from constants import TASK_QUEUE_NAME, ActionRegistryKey
+from critic_actions import CriticActions
 from workflow import DocWriterActorCriticWorkflow
-from writer_actions import DraftDocument, ReviseDocument
-from critic_actions import CritiqueDocument, PassFailDocument
+from writer_actions import WriterActions
 
 
 async def main():
@@ -29,17 +28,8 @@ async def main():
     agent_state_repository = AgentStateRepository(kv_store=redis_repository)
     agent_state_service = AgentStateService(repository=agent_state_repository)
 
-    # Register actions
-    action_registry = ActionRegistry(actions={
-        ActionRegistryKey.WRITER: [
-            DraftDocument,
-            ReviseDocument,
-        ],
-        ActionRegistryKey.CRITIC: [
-            CritiqueDocument,
-            PassFailDocument,
-        ],
-    })
+    writer_actions = WriterActions(agent_state_service=agent_state_service)
+    critic_actions = CriticActions(agent_state_service=agent_state_service)
 
     agent_state_activities = AgentStateActivities(
         agent_state=agent_state_service,
@@ -47,7 +37,10 @@ async def main():
     action_loop_activities = ActionLoopActivities(
         llm_gateway=llm_gateway,
         agent_state=agent_state_service,
-        action_class_registry=action_registry,
+        action_registries={
+            ActionRegistryKey.WRITER: writer_actions,
+            ActionRegistryKey.CRITIC: critic_actions,
+        },
     )
     notification_activities = NotificationActivities(
         notification_gateway=notification_gateway,

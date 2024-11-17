@@ -1,7 +1,9 @@
 from typing import List, Dict, Any, Optional
 
+from agentex.exceptions import ClientError
+from agentex.src.entities.actions import Artifact
 from agentex.src.entities.llm import Message
-from agentex.src.entities.state import Thread
+from agentex.src.entities.state import Thread, ContextKey
 from agentex.src.services.agent_state_repository import AgentStateRepository
 
 
@@ -121,15 +123,53 @@ class ContextService:
         state = await self.repository.load(task_id)
         return {key: state.context.get(key) for key in keys}
 
+    async def get_artifact(self, task_id: str, artifact_name: str) -> Optional[Artifact]:
+        state = await self.repository.load(task_id)
+        if ContextKey.ARTIFACTS not in state.context:
+            state.context[ContextKey.ARTIFACTS] = {}
+        artifact_dict = state.context[ContextKey.ARTIFACTS].get(artifact_name)
+        if artifact_dict:
+            return Artifact.from_dict(artifact_dict)
+        return None
+
+    async def get_artifacts(self, task_id: str) -> Dict[str, Artifact]:
+        state = await self.repository.load(task_id)
+        if ContextKey.ARTIFACTS not in state.context:
+            state.context[ContextKey.ARTIFACTS] = {}
+        return {name: Artifact.from_dict(artifact) for name, artifact in state.context[ContextKey.ARTIFACTS].items()}
+
     async def set_value(self, task_id: str, key: str, value: Any) -> None:
         state = await self.repository.load(task_id)
         state.context[key] = value
         await self.repository.save(task_id, state)
 
+    async def set_artifact(
+        self, task_id: str, artifact_name: str, artifact: Artifact, overwrite: bool = False
+    ) -> None:
+        state = await self.repository.load(task_id)
+        if ContextKey.ARTIFACTS not in state.context:
+            state.context[ContextKey.ARTIFACTS] = {}
+        if overwrite or artifact_name not in state.context[ContextKey.ARTIFACTS]:
+            state.context[ContextKey.ARTIFACTS][artifact_name] = artifact
+            await self.repository.save(task_id, state)
+        else:
+            raise ClientError(f"Artifact with name '{artifact_name}' already exists in the context.")
+
     async def batch_set_value(self, task_id: str, updates: Dict[str, Any]) -> None:
         state = await self.repository.load(task_id)
         for key, value in updates.items():
             state.context[key] = value
+        await self.repository.save(task_id, state)
+
+    async def batch_set_artifacts(self, task_id: str, artifacts: List[Artifact], overwrite: bool = False) -> None:
+        state = await self.repository.load(task_id)
+        if ContextKey.ARTIFACTS not in state.context:
+            state.context[ContextKey.ARTIFACTS] = {}
+        for artifact in artifacts:
+            if overwrite or artifact.name not in state.context[ContextKey.ARTIFACTS]:
+                state.context[ContextKey.ARTIFACTS][artifact.name] = artifact
+            else:
+                raise ClientError(f"Artifact with name '{artifact.name}' already exists in the context.")
         await self.repository.save(task_id, state)
 
     async def delete_value(self, task_id: str, key: str) -> None:
@@ -138,11 +178,25 @@ class ContextService:
             del state.context[key]
         await self.repository.save(task_id, state)
 
+    async def delete_artifact(self, task_id: str, artifact_name: str) -> None:
+        state = await self.repository.load(task_id)
+        if ContextKey.ARTIFACTS in state.context and artifact_name in state.context[ContextKey.ARTIFACTS]:
+            del state.context[ContextKey.ARTIFACTS][artifact_name]
+            await self.repository.save(task_id, state)
+
     async def batch_delete_value(self, task_id: str, keys: List[str]) -> None:
         state = await self.repository.load(task_id)
         for key in keys:
             if key in state.context:
                 del state.context[key]
+        await self.repository.save(task_id, state)
+
+    async def batch_delete_artifacts(self, task_id: str, artifact_names: List[str]) -> None:
+        state = await self.repository.load(task_id)
+        if ContextKey.ARTIFACTS in state.context:
+            for artifact_name in artifact_names:
+                if artifact_name in state.context[ContextKey.ARTIFACTS]:
+                    del state.context[ContextKey.ARTIFACTS][artifact_name]
         await self.repository.save(task_id, state)
 
     async def delete_all(self, task_id: str) -> None:

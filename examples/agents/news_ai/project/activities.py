@@ -1,8 +1,10 @@
-from typing import List
+from typing import List, Any, Dict, Optional
 
 from GoogleNews import GoogleNews
+from pydantic import Field
 
-from agentex.src.entities.actions import Action, ActionResponse, Artifact
+from agentex.src.entities.actions import ActionResponse, Artifact
+from agentex.src.services.action_registry import ActionRegistry, action
 from agentex.utils.model_utils import BaseModel
 from agentex.utils.parsing import remove_query_params
 
@@ -21,25 +23,24 @@ class Company(BaseModel):
     category: str  # e.g., Startup, Model Provider, Cloud Provider, etc.
 
 
-class FetchNews(Action):
-    """
-    Fetch the latest news articles related to a given topic using GoogleNews.
-    """
+class NewsActions(ActionRegistry):
 
-    keyword: str
-    language: str = "en"
-    period: str = "7d"
-
-    async def execute(self) -> ActionResponse:
+    @action(description="Fetch the latest news articles related to a given topic using GoogleNews.")
+    async def fetch_news(
+        self,
+        keyword: str = Field(..., description="The keyword to search news for."),
+        language: str = Field(default="en", description="Language of the news articles."),
+        period: str = Field(default="7d", description="Time period for news search."),
+        _reserved: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
         try:
-            gn = GoogleNews(lang=self.language, period=self.period)
-            gn.search(self.keyword)
+            gn = GoogleNews(lang=language, period=period)
+            gn.search(keyword)
             results = gn.result()
             articles = [NewsArticle(**article) for article in results]
             return ActionResponse(
-                message=f"""Fetched {len(articles)} articles related to '{self.keyword}':
-{'\n\n'.join([str(article.to_dict()) for article in articles])},
-        """,
+                message=f"Fetched {len(articles)} articles related to '{keyword}':\n"
+                        f"{', '.join([article.title for article in articles])}",
             )
         except Exception as e:
             return ActionResponse(
@@ -47,66 +48,59 @@ class FetchNews(Action):
                 success=False
             )
 
-
-class ProcessNews(Action):
-    """
-    Process the fetched news articles and filter out the relevant ones based on provided company data.
-    """
-    fetched_articles: List[NewsArticle]
-    provided_companies: List[Company]
-
-    async def execute(self) -> ActionResponse:
+    @action(description="Process fetched news articles and filter relevant ones based on company data.")
+    async def process_news(
+        self,
+        fetched_articles: List[NewsArticle] = Field(..., description="List of fetched news articles."),
+        provided_companies: List[Company] = Field(..., description="List of companies to filter articles by."),
+        _reserved: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
         try:
             relevant_articles = []
-            company_names = [company.name for company in self.provided_companies]
+            company_names = [company.name for company in provided_companies]
 
-            for article in self.fetched_articles:
+            for article in fetched_articles:
                 for company in company_names:
                     if company.lower() in article.title.lower() or company.lower() in article.desc.lower():
                         relevant_articles.append({
                             "company": company,
-                            "category": next((c.category for c in self.provided_companies if c.name == company),
-                                             "Other"),
+                            "category": next((c.category for c in provided_companies if c.name == company), "Other"),
                             "title": article.title,
                             "description": article.desc,
                             "link": remove_query_params(article.link),
                             "date": article.date,
                             "media": article.media
                         })
-                        break  # Avoid duplicate entries if multiple companies match
+                        break
 
             return ActionResponse(
-                message=f"""Processed articles. Found {len(relevant_articles)} relevant articles.
-{'\n\n'.join([str(article) for article in relevant_articles])},
-""",
+                message=f"Processed articles. Found {len(relevant_articles)} relevant articles:\n"
+                        f"{', '.join([article['title'] for article in relevant_articles])}",
             )
         except Exception as e:
             return ActionResponse(
                 message=f"Failed to process news articles: {str(e)}",
             )
 
-
-class WriteSummary(Action):
-    """
-    Write a summary document based on the provided markdown
-    """
-    name: str
-    description: str
-    markdown_content: str
-
-    async def execute(self) -> ActionResponse:
+    @action(description="Write a summary document based on the provided markdown.")
+    async def write_summary(
+        self,
+        name: str = Field(..., description="The name of the summary document."),
+        description: str = Field(..., description="Description of the summary."),
+        markdown_content: str = Field(..., description="The markdown content to save."),
+        _reserved: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
         try:
-            # Save the markdown content to a file.
-            filename = f"{self.name.replace(' ', '_')}.md"
+            filename = f"{name.replace(' ', '_')}.md"
             with open(filename, "w", encoding="utf-8") as f:
-                f.write(self.markdown_content)
+                f.write(markdown_content)
             return ActionResponse(
                 message=f"Summary document '{filename}' written successfully.",
                 artifacts=[
                     Artifact(
-                        name=self.name,
-                        description=self.description,
-                        content=self.markdown_content
+                        name=name,
+                        description=description,
+                        content=markdown_content
                     )
                 ]
             )
@@ -115,14 +109,12 @@ class WriteSummary(Action):
                 message=f"Failed to write summary document: {str(e)}",
             )
 
-
-class ReportTerminalFailure(Action):
-    """
-    Report a terminal failure in the workflow.
-    """
-    message: str
-
-    async def execute(self) -> ActionResponse:
+    @action(description="Report a terminal failure in the workflow.")
+    async def report_terminal_failure(
+        self,
+        message: str = Field(..., description="Failure message to report."),
+        _reserved: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
         return ActionResponse(
-            message=self.message,
+            message=message,
         )

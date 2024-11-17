@@ -7,7 +7,7 @@ from agentex.sdk.lib.activities.state import AgentStateActivities
 from agentex.src.adapters.kv_store.adapter_redis import RedisRepository
 from agentex.src.adapters.llm.adapter_litellm import LiteLLMGateway
 from agentex.src.adapters.notifications.adapter_ntfy import NtfyGateway
-from agentex.src.entities.actions import ActionRegistry
+from agentex.src.services.action_registry import ActionRegistry
 from agentex.src.services.agent_state_repository import AgentStateRepository
 from agentex.src.services.agent_state_service import AgentStateService
 from examples.agents.news_ai.project.activities import FetchNews, ProcessNews, WriteSummary, ReportTerminalFailure

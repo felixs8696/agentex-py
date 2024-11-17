@@ -1,4 +1,5 @@
 from collections import defaultdict
+from enum import Enum
 from typing import List, Dict, Any, Optional, Literal
 
 from pydantic import Field
@@ -40,3 +41,7 @@ class AgentState(BaseModel):
     context: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
     )
+
+
+class ContextKey(str, Enum):
+    ARTIFACTS = "artifacts"

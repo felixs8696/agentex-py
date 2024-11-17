@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import List
 
 from temporalio import activity
@@ -6,12 +5,9 @@ from temporalio import activity
 from agentex.sdk.lib.activities.names import ActivityName
 from agentex.src.entities.actions import Artifact
 from agentex.src.entities.llm import Message
+from agentex.src.entities.state import ContextKey
 from agentex.src.services.agent_state_service import AgentStateService
 from agentex.utils.model_utils import BaseModel
-
-
-class ContextKey(str, Enum):
-    ARTIFACTS = "artifacts"
 
 
 class AppendMessagesToThreadParams(BaseModel):
@@ -68,16 +64,9 @@ class AgentStateActivities:
     async def add_artifact_to_context(self, params: AddArtifactToContextParams) -> None:
         task_id = params.task_id
         artifact = params.artifact
-
-        artifacts = await self.agent_state.context.get_value(
+        await self.agent_state.context.set_artifact(
             task_id=task_id,
-            key=ContextKey.ARTIFACTS,
-        )
-        if artifacts is None:
-            artifacts = []
-        artifacts.append(artifact.to_dict())
-        await self.agent_state.context.set_value(
-            task_id=task_id,
-            key=ContextKey.ARTIFACTS,
-            value=artifacts
+            artifact_name=artifact.name,
+            artifact=artifact,
+            overwrite=True,
         )

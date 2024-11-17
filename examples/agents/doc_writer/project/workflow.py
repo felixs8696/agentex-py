@@ -5,13 +5,14 @@ from typing import List
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
+from agentex.constants import DEFAULT_ROOT_THREAD_NAME
 from agentex.sdk.execution.helpers import WorkflowHelper
 from agentex.sdk.execution.workflow import AgentTaskWorkflowParams, BaseWorkflow
 from agentex.sdk.lib.activities.names import ActivityName
 from agentex.sdk.lib.activities.state import AppendMessagesToThreadParams, AddArtifactToContextParams
 from agentex.sdk.lib.workflows.action_loop import ActionLoop
 from agentex.src.entities.actions import Artifact
-from agentex.src.entities.llm import Message, UserMessage, SystemMessage, LLMConfig
+from agentex.src.entities.llm import Message, UserMessage, SystemMessage, LLMConfig, AssistantMessage
 from agentex.src.entities.notifications import NotificationRequest
 from agentex.src.entities.state import Completion
 from agentex.utils.logging import make_logger
@@ -33,9 +34,8 @@ class DocWriterActorCriticWorkflow(BaseWorkflow):
         self.model = "gpt-4o"
         self.writer_instructions = (
             "You are an AI agent designed to write a document based on the prompt provided by the user. "
-            "You should draft and revise the document asked for until you have addressed the user's needs. "
             "You are also being evaluated by a critic and should address all criticisms given to you. Once "
-            "you finish iterating, always output the revised document name and content in markdown back to the user."
+            "you finish iterating, always save any artifacts you produce so others can read them."
         )
         self.critic_instructions = (
             "You are an AI agent designed to provide feedback on the document written by the writer agent. Consider "
@@ -51,6 +51,7 @@ class DocWriterActorCriticWorkflow(BaseWorkflow):
         agent = params.agent
 
         writer_thread_name = "writer"
+        final_responses_thread_name = "final_responses"
 
         try:
             self.event_log.append({"event": "task_received", "task": task})
@@ -100,10 +101,10 @@ class DocWriterActorCriticWorkflow(BaseWorkflow):
                         action_registry_key=ActionRegistryKey.WRITER,
                         model=self.model,
                     )
-                    await self._save_artifact(task_id=task.id, artifact=Artifact(
-                        name=f"writer_draft_{iteration + 1}",
-                        content=latest_content,
-                    ))
+                    # await self._save_artifact(task_id=task.id, artifact=Artifact(
+                    #     name=f"writer_draft_{iteration + 1}",
+                    #     content=latest_content,
+                    # ))
 
                     logger.info("Writer tool loop finished")
 
@@ -152,13 +153,42 @@ class DocWriterActorCriticWorkflow(BaseWorkflow):
                         start_to_close_timeout=timedelta(seconds=60),
                         retry_policy=RetryPolicy(maximum_attempts=5),
                     )
-                    critic_satisfied = critic_satisfied_completion.choices[0].message.content.lower() == "false"
+                    critic_satisfied = critic_satisfied_completion.choices[0].message.content.lower() != "false"
                     iteration += 1
                     content = latest_content
-                    await self._save_artifact(task_id=task.id, artifact=Artifact(
-                        name=f"writer_final_draft_{iteration + 1}",
-                        content=latest_content,
-                    ))
+                    if critic_satisfied:
+                        final_summary_completion = await WorkflowHelper.execute_activity(
+                            activity_name=ActivityName.ASK_LLM,
+                            request=LLMConfig(
+                                model=self.model,
+                                messages=[
+                                    UserMessage(
+                                        content=f"You're overseeing a project where a writer and a critic are working "
+                                                f"together to produce a perfect document. The last message from the "
+                                                f"writer was the following:\n{latest_content}\n\n"
+                                                f"The output from the critic was the following:\n{critic_response}\n\n"
+                                                f"Your final decision was that the document is ready for the user to "
+                                                f"review. Please give a thorough explanation of why the writer, "
+                                                f"critic, and you all agree that the document is ready for review."
+                                    )
+                                ],
+                            ),
+                            response_type=Completion,
+                            start_to_close_timeout=timedelta(seconds=60),
+                            retry_policy=RetryPolicy(maximum_attempts=5),
+                        )
+
+                        final_summary_message = final_summary_completion.choices[0].message.content
+
+                        await self._add_messages_to_thread(
+                            task_id=task.id,
+                            thread_name=final_responses_thread_name,
+                            messages=[
+                                AssistantMessage(
+                                    content=final_summary_message
+                                ),
+                            ],
+                        )
 
                 if params.require_approval:
                     logger.info("Waiting for instruction or approval")

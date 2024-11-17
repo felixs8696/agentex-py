@@ -4,3 +4,7 @@ import re
 def camel_to_snake(camel_case_str: str) -> str:
     # Substitute capital letters with an underscore followed by the lowercase letter
     return re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case_str).lower()
+
+
+def snake_to_title(snake_case_str: str) -> str:
+    return snake_case_str.title().replace("_", "")

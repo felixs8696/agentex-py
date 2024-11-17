@@ -1,17 +1,15 @@
-from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Union, Type, Literal, Any
+from typing import List, Any, Dict, Optional
+from typing import Union, Literal
 
 from pydantic import Field
 
-from agentex.utils.json_schema import resolve_refs
 from agentex.utils.model_utils import BaseModel
-from agentex.utils.regex import camel_to_snake
 
 
 class FunctionSchema(BaseModel):
     name: str
     description: Optional[str]
-    parameters: Dict[str, Any]
+    parameters: Any
 
 
 class FunctionCallSchema(BaseModel):
@@ -54,39 +52,3 @@ class ActionResponse(BaseModel):
         True,
         description="Whether the action was successful or not."
     )
-
-
-class Action(BaseModel, ABC):
-
-    @classmethod
-    def function_call_schema(cls) -> FunctionCallSchema:
-        return FunctionCallSchema(
-            type="function",
-            function=FunctionSchema(
-                name=camel_to_snake(cls.__name__),
-                description=cls.__doc__.strip(),
-                parameters=resolve_refs(cls.schema())
-            )
-        )
-
-    @abstractmethod
-    async def execute(self) -> ActionResponse:
-        pass
-
-
-class ActionRegistry:
-    def __init__(self, actions: Dict[str, List[Type[Action]]]):
-        self.actions = actions
-
-    @property
-    def registry(self) -> Dict[str, Dict[str, Type[Action]]]:
-        return {
-            key: {
-                action_class.function_call_schema().function.name: action_class
-                for action_class in actions
-            }
-            for key, actions in self.actions.items()
-        }
-
-    def get(self, key: str, action_name: str) -> Type[Action]:
-        return self.registry[key][action_name]

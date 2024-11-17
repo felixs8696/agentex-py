@@ -1,10 +1,12 @@
 import json
+from typing import Dict
 
 from temporalio import activity
 
 from agentex.sdk.lib.activities.names import ActivityName
 from agentex.src.adapters.llm.port import LLMGateway
-from agentex.src.entities.actions import ActionResponse, ActionRegistry
+from agentex.src.entities.actions import ActionResponse
+from agentex.src.services.action_registry import ActionRegistry, ReservedKey
 from agentex.src.entities.llm import LLMConfig, ToolMessage, SystemMessage, UserMessage
 from agentex.src.entities.state import Completion
 from agentex.src.services.agent_state_service import AgentStateService
@@ -36,12 +38,12 @@ class ActionLoopActivities:
         self,
         llm_gateway: LLMGateway,
         agent_state: AgentStateService,
-        action_class_registry: ActionRegistry,
+        action_registries: Dict[str, ActionRegistry],
     ):
         super().__init__()
         self.llm = llm_gateway
         self.agent_state = agent_state
-        self.action_class_registry = action_class_registry
+        self.action_registries = action_registries
 
     @activity.defn(name=ActivityName.DECIDE_ACTION)
     async def decide_action(
@@ -57,7 +59,7 @@ class ActionLoopActivities:
         completion_args = LLMConfig(
             model=model,
             messages=messages,
-            tools=[action.function_call_schema() for action in self.action_class_registry.actions[action_registry_key]]
+            tools=self.action_registries[action_registry_key].get_function_call_schema_list(),
         )
         completion = await self.llm.acompletion(**completion_args.to_dict())
         message = completion.choices[0].message
@@ -124,8 +126,16 @@ class ActionLoopActivities:
 
         exception = None
         try:
-            action_class = self.action_class_registry.get(key=action_registry_key, action_name=tool_name)
-            action_response = await action_class(**json.loads(tool_args)).execute()
+            action_registry = self.action_registries[action_registry_key]
+            action_response = await action_registry.call(
+                name=tool_name,
+                params={
+                    "_reserved": {
+                        ReservedKey.TASK_ID: task_id,
+                    },
+                    **json.loads(tool_args)
+                }
+            )
         except Exception as error:
             # Log the error so the agent can fix it if possible (the activity retry loop should handle)
             action_response = ActionResponse(
