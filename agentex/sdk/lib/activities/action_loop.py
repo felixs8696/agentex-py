@@ -17,12 +17,14 @@ logger = make_logger(__name__)
 class DecideActionParams(BaseModel):
     task_id: str
     thread_name: str
+    action_registry_key: str
     model: str
 
 
 class TakeActionParams(BaseModel):
     task_id: str
     thread_name: str
+    action_registry_key: str
     tool_call_id: str
     tool_name: str
     tool_args: str
@@ -49,12 +51,13 @@ class ActionLoopActivities:
         task_id = params.task_id
         thread_name = params.thread_name
         model = params.model
+        action_registry_key = params.action_registry_key
 
         messages = await self.agent_state.threads.get_messages(task_id=task_id, thread_name=thread_name)
         completion_args = LLMConfig(
             model=model,
             messages=messages,
-            tools=[action.function_call_schema() for action in self.action_class_registry.actions]
+            tools=[action.function_call_schema() for action in self.action_class_registry.actions[action_registry_key]]
         )
         completion = await self.llm.acompletion(**completion_args.to_dict())
         message = completion.choices[0].message
@@ -79,9 +82,12 @@ class ActionLoopActivities:
                                 f"user as a sort of progress report on your work on the task."
                                 f"These are the tool calls you decided to make:\n\n"
                                 f"Tool calls:\n{message.tool_calls}\n\n"
-                                f"EXAMPLE: Here are some examples of how to craft a good response. "
+                                f"Here are some examples of how to craft a good response. "
                                 f"Please follow the same style and give the appropriate amount of detail for the user "
-                                f"to feel comfortable with your progress:\n"
+                                f"to feel comfortable with your progress. Note that I don't mention that I'm using a "
+                                f"'tool' specifically. I'm calling out what action I'm taking in a more conversational "
+                                f"way. Also note that the responses are brief, but efficient and detailed.\n\n"
+                                f"EXAMPLE:\n"
                                 f"If the task is to send an email, and the tools available are a DraftEmail and "
                                 f"SendEmail tool, when you use the DraftEmail tool, you can say:"
                                 f"'In order to send an email, I need to draft the email first. Give me a moment to "
@@ -114,10 +120,11 @@ class ActionLoopActivities:
         tool_call_id = params.tool_call_id
         tool_name = params.tool_name
         tool_args = params.tool_args
+        action_registry_key = params.action_registry_key
 
         exception = None
         try:
-            action_class = self.action_class_registry.get(tool_name)
+            action_class = self.action_class_registry.get(key=action_registry_key, action_name=tool_name)
             action_response = await action_class(**json.loads(tool_args)).execute()
         except Exception as error:
             # Log the error so the agent can fix it if possible (the activity retry loop should handle)

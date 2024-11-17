@@ -14,7 +14,7 @@ from agentex.sdk.lib.workflows.action_loop import ActionLoop
 from agentex.src.entities.llm import Message, UserMessage, SystemMessage
 from agentex.src.entities.notifications import NotificationRequest
 from agentex.utils.logging import make_logger
-from examples.agents.news_ai.project.constants import AGENT_NAME
+from examples.agents.news_ai.project.constants import AGENT_NAME, BASE_ACTION_REGISTRY_KEY
 
 logger = make_logger(__name__)
 
@@ -61,6 +61,7 @@ class NewsAIWorkflow(BaseWorkflow):
                 content = await ActionLoop.run(
                     parent_workflow=self,
                     task_id=task.id,
+                    action_registry_key=BASE_ACTION_REGISTRY_KEY,
                     thread_name=DEFAULT_ROOT_THREAD_NAME,
                     model=self.model,
                 )

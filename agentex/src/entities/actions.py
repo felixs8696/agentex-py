@@ -1,11 +1,22 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any, Union, Literal, Type
+from typing import Optional, List, Dict, Union, Type, Literal, Any
 
 from pydantic import Field
 
 from agentex.utils.json_schema import resolve_refs
 from agentex.utils.model_utils import BaseModel
 from agentex.utils.regex import camel_to_snake
+
+
+class FunctionSchema(BaseModel):
+    name: str
+    description: Optional[str]
+    parameters: Dict[str, Any]
+
+
+class FunctionCallSchema(BaseModel):
+    type: Literal["function"] = Field("function")
+    function: FunctionSchema
 
 
 class Artifact(BaseModel):
@@ -45,17 +56,6 @@ class ActionResponse(BaseModel):
     )
 
 
-class FunctionSchema(BaseModel):
-    name: str
-    description: Optional[str]
-    parameters: Dict[str, Any]
-
-
-class FunctionCallSchema(BaseModel):
-    type: Literal["function"] = Field("function")
-    function: FunctionSchema
-
-
 class Action(BaseModel, ABC):
 
     @classmethod
@@ -75,15 +75,18 @@ class Action(BaseModel, ABC):
 
 
 class ActionRegistry:
-    def __init__(self, actions: List[Type[Action]]):
+    def __init__(self, actions: Dict[str, List[Type[Action]]]):
         self.actions = actions
 
     @property
-    def registry(self) -> Dict[str, Type[Action]]:
+    def registry(self) -> Dict[str, Dict[str, Type[Action]]]:
         return {
-            action_class.function_call_schema().function.name: action_class
-            for action_class in self.actions
+            key: {
+                action_class.function_call_schema().function.name: action_class
+                for action_class in actions
+            }
+            for key, actions in self.actions.items()
         }
 
-    def get(self, action_name: str) -> Type[Action]:
-        return self.registry[action_name]
+    def get(self, key: str, action_name: str) -> Type[Action]:
+        return self.registry[key][action_name]

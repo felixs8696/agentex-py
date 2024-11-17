@@ -1,5 +1,6 @@
 import asyncio
 
+from activities import HelloAdam, HelloJessica
 from agentex.sdk.execution.worker import AgentexWorker
 from agentex.sdk.lib.activities.action_loop import ActionLoopActivities
 from agentex.sdk.lib.activities.notifications import NotificationActivities
@@ -10,10 +11,8 @@ from agentex.src.adapters.notifications.adapter_ntfy import NtfyGateway
 from agentex.src.entities.actions import ActionRegistry
 from agentex.src.services.agent_state_repository import AgentStateRepository
 from agentex.src.services.agent_state_service import AgentStateService
-from constants import TASK_QUEUE_NAME
-
+from constants import TASK_QUEUE_NAME, BASE_ACTION_REGISTRY_KEY
 from workflow import HelloWorldWorkflow
-from activities import HelloAdam, HelloJessica
 
 
 async def main():
@@ -29,10 +28,12 @@ async def main():
     agent_state_service = AgentStateService(repository=agent_state_repository)
 
     # Register actions
-    action_registry = ActionRegistry(actions=[
-        HelloAdam,
-        HelloJessica,
-    ])
+    action_registry = ActionRegistry(actions={
+        BASE_ACTION_REGISTRY_KEY: [
+            HelloAdam,
+            HelloJessica,
+        ]
+    })
 
     agent_state_activities = AgentStateActivities(
         agent_state=agent_state_service,

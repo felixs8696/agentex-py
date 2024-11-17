@@ -1,0 +1,13 @@
+build:
+  context:
+    root: ../../../../
+    include_paths:
+      - agentex-py
+    dockerfile: agentex-py/examples/agents/doc_writer/Dockerfile
+    dockerignore: agentex-py/examples/agents/doc_writer/.dockerignore
+agent:
+  name: doc-writer
+  description: An AI agent that writes documents
+workflow:
+  name: doc-writer
+  queue_name: doc_writer_task_queue

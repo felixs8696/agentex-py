@@ -17,7 +17,9 @@ logger = make_logger(__name__)
 class ActionLoop:
 
     @staticmethod
-    async def run(parent_workflow: BaseWorkflow, task_id: str, thread_name: str, model: str) -> str:
+    async def run(
+        parent_workflow: BaseWorkflow, task_id: str, thread_name: str, model: str, action_registry_key: str
+    ) -> str:
         content = None
         finish_reason = None
         while finish_reason not in ("stop", "length", "content_filter"):
@@ -27,6 +29,7 @@ class ActionLoop:
                 request=DecideActionParams(
                     task_id=task_id,
                     thread_name=thread_name,
+                    action_registry_key=action_registry_key,
                     model=model,
                 ),
                 response_type=Completion,
@@ -52,6 +55,7 @@ class ActionLoop:
                             request=TakeActionParams(
                                 task_id=task_id,
                                 thread_name=thread_name,
+                                action_registry_key=action_registry_key,
                                 tool_call_id=tool_call.id,
                                 tool_name=tool_call.function.name,
                                 tool_args=tool_call.function.arguments,

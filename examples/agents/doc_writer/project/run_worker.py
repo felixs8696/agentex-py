@@ -2,6 +2,7 @@ import asyncio
 
 from agentex.sdk.execution.worker import AgentexWorker
 from agentex.sdk.lib.activities.action_loop import ActionLoopActivities
+from agentex.sdk.lib.activities.llm import LLMActivities
 from agentex.sdk.lib.activities.notifications import NotificationActivities
 from agentex.sdk.lib.activities.state import AgentStateActivities
 from agentex.src.adapters.kv_store.adapter_redis import RedisRepository
@@ -10,9 +11,10 @@ from agentex.src.adapters.notifications.adapter_ntfy import NtfyGateway
 from agentex.src.entities.actions import ActionRegistry
 from agentex.src.services.agent_state_repository import AgentStateRepository
 from agentex.src.services.agent_state_service import AgentStateService
-from examples.agents.news_ai.project.activities import FetchNews, ProcessNews, WriteSummary, ReportTerminalFailure
-from examples.agents.news_ai.project.constants import TASK_QUEUE_NAME, BASE_ACTION_REGISTRY_KEY
-from workflow import NewsAIWorkflow
+from constants import TASK_QUEUE_NAME, ActionRegistryKey
+from workflow import DocWriterActorCriticWorkflow
+from writer_actions import DraftDocument, ReviseDocument
+from critic_actions import CritiqueDocument, PassFailDocument
 
 
 async def main():
@@ -29,12 +31,14 @@ async def main():
 
     # Register actions
     action_registry = ActionRegistry(actions={
-        BASE_ACTION_REGISTRY_KEY: [
-            FetchNews,
-            ProcessNews,
-            WriteSummary,
-            ReportTerminalFailure,
-        ]
+        ActionRegistryKey.WRITER: [
+            DraftDocument,
+            ReviseDocument,
+        ],
+        ActionRegistryKey.CRITIC: [
+            CritiqueDocument,
+            PassFailDocument,
+        ],
     })
 
     agent_state_activities = AgentStateActivities(
@@ -48,16 +52,21 @@ async def main():
     notification_activities = NotificationActivities(
         notification_gateway=notification_gateway,
     )
+    llm_activities = LLMActivities(
+        llm_gateway=llm_gateway,
+    )
 
     await worker.run(
         activities=[
             agent_state_activities.append_messages_to_thread,
             agent_state_activities.get_messages_from_thread,
+            agent_state_activities.add_artifact_to_context,
             action_loop_activities.decide_action,
             action_loop_activities.take_action,
+            llm_activities.ask_llm,
             notification_activities.send_notification,
         ],
-        workflow=NewsAIWorkflow,
+        workflow=DocWriterActorCriticWorkflow,
     )
 
 

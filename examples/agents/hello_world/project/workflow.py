@@ -14,7 +14,7 @@ from agentex.sdk.lib.workflows.action_loop import ActionLoop
 from agentex.src.entities.llm import Message, UserMessage, SystemMessage
 from agentex.src.entities.notifications import NotificationRequest
 from agentex.utils.logging import make_logger
-from constants import AGENT_NAME
+from constants import AGENT_NAME, BASE_ACTION_REGISTRY_KEY
 
 logger = make_logger(__name__)
 
@@ -60,6 +60,7 @@ class HelloWorldWorkflow(BaseWorkflow):
                     parent_workflow=self,
                     task_id=task.id,
                     thread_name=DEFAULT_ROOT_THREAD_NAME,
+                    action_registry_key=BASE_ACTION_REGISTRY_KEY,
                     model=self.model,
                 )
                 logger.info("Tool loop finished")
